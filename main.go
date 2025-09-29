@@ -174,7 +174,7 @@ func addNewItem(w http.ResponseWriter, r *http.Request) {
 
 func getIncome(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(incomeSection)
+	json.NewEncoder(w).Encode(sections[0])
 }
 
 
