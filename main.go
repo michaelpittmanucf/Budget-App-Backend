@@ -7,6 +7,9 @@ import (
 	"strconv"
 )
 
+
+//================ Fields ===================================
+
 type BudgetItem struct {
 	Id int `json:"id"`
 	ItemName string `json:"itemName"`
@@ -33,7 +36,13 @@ var section = BudgetSection {
 	Items: items,
 }
 
-var sections = []BudgetSection {section}
+var incomeSection = BudgetSection {
+	Id: 4,
+	Title: "Income",
+	Items: make([]BudgetItem, 0),
+}
+
+var sections = []BudgetSection {incomeSection, section}
 
 var maxId int
 
@@ -110,6 +119,11 @@ func deleteSection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if sections[indexToRemove].Title == "Income" {
+		http.Error(w, "Cannot delete Income section", http.StatusBadRequest)
+		return
+	}
+
 	sections = append(sections[:indexToRemove], sections[indexToRemove+1:]...)
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(sections)
@@ -124,6 +138,7 @@ func findSectionIndexById(sectionId int) int {
 
 	return -1
 }
+
 
 func addNewItem(w http.ResponseWriter, r *http.Request) {
 	sectionId := r.URL.Path[len("/item/"):]
@@ -156,6 +171,15 @@ func addNewItem(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(sections)
 }
+
+func getIncome(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(incomeSection)
+}
+
+
+//================ Handlers ===================================
+
 
 func handlePlan(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -195,6 +219,25 @@ func handleItem(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func handleIncome(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "*")
+
+	switch r.Method {
+	case "GET":
+		getIncome(w,r)
+	case "OPTIONS":
+			w.WriteHeader(http.StatusOK)
+	default:
+		http.Error(w, "Method not supported", http.StatusMethodNotAllowed)
+	}
+}
+
+
+//================ Main ===================================
+
 func main() {
 	maxId = 3
 
@@ -202,6 +245,8 @@ func main() {
 	http.HandleFunc("/plan", handlePlan)
 
 	http.HandleFunc("/item/", handleItem)
+
+	http.HandleFunc("/income", handleIncome)
 
 	fmt.Println("Server starting on port 4321...")
 
